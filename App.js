@@ -5,8 +5,8 @@ import {storeData, getData} from './src/utils/storage';
 
 export default function App() {
   const [inputText, setInputText] = useState('');
-  const [todoList, setTodoList] = useState([{checked: false, text: "yoo!"}]);
-  
+  const [todoList, setTodoList] = useState([]);
+
   useEffect(() => {
     getData()
     .then(items =>setTodoList(items))  
@@ -80,8 +80,9 @@ export default function App() {
           onPress={onAddHandler}
         />
       </View>
-      <FlatList
-        data={todoList}
+      <FlatList 
+        removeClippedSubviews={false}
+        data={[...todoList, ]}
         extraData={todoList}
         keyExtractor={(item, index) => item.text+index}
         style={styles.list}
