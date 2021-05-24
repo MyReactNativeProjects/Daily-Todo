@@ -1,15 +1,20 @@
 import React, {useState, useEffect} from 'react';
-import { Button, StyleSheet, View, TextInput, FlatList } from 'react-native';
+import { Button, StyleSheet, View, TextInput, FlatList, TouchableOpacity } from 'react-native';
 import Todo from './src/components/Todo';
-import {storeData, getData} from './src/utils/storage';
+import TodoLink from './src/components/TodoLink';
+import List from './src/components/List';
+import {storeData, getData, removeValue} from './src/utils/storage';
 
 export default function App() {
   const [inputText, setInputText] = useState('');
   const [todoList, setTodoList] = useState([]);
+  const [listShowing, setListShowing] = useState([]);
+  const [mainPage, setMainPage] = useState(true);
 
   useEffect(() => {
+    //removeValue()
     getData()
-    .then(items =>setTodoList(items))  
+    .then(items => setTodoList(items))
   }, [])
 
   useEffect(() => {
@@ -19,11 +24,19 @@ export default function App() {
   const onAddHandler = () => {
     if (inputText === '')
       return;
-    const newItem = {
-      checked: false,
-      text: inputText
+    if (mainPage){
+      const newItem = {
+        title: inputText,
+        list: []
+      }
+      setTodoList([...todoList, newItem])
+    }else{
+      const newItem = {
+        checked: false,
+        text: inputText
+      }
+      setListShowing([...listShowing, newItem])
     }
-    setTodoList([...todoList, newItem])
     setInputText('');
   }
 
@@ -53,7 +66,28 @@ export default function App() {
     setTodoList(currentTodoList);
   }
 
+  const onBackHandler = () => {
+    setMainPage(true);
+  }
+
   const renderItem = ({item, index}) => {
+    if (mainPage)
+    {
+      return (
+        <TouchableOpacity
+          onPress={() => {
+            setListShowing(item.list);
+            setMainPage(false);
+          }}
+        >
+          <TodoLink 
+            item={item}
+            index={index} 
+            onDelete={onDeleteHandler} 
+          />
+        </TouchableOpacity>
+      )
+    }
     return (
       <Todo 
         item={item} 
@@ -80,19 +114,38 @@ export default function App() {
           onPress={onAddHandler}
         />
       </View>
-      <FlatList 
+      {mainPage
+      ? <FlatList 
         removeClippedSubviews={false}
-        data={[...todoList, ]}
+        data={todoList}
         extraData={todoList}
-        keyExtractor={(item, index) => item.text+index}
+        keyExtractor={(item, index) => item.title+index}
         style={styles.list}
         renderItem={(item, index) =>renderItem(item, index)}
       />
-      <Button 
-        title="New Day" 
-        color="#008577"
-        onPress={onNewDayHandler}
-      />
+      : <FlatList 
+          removeClippedSubviews={false}
+          data={listShowing}
+          extraData={listShowing}
+          keyExtractor={(item, index) => item.text+index}
+          style={styles.list}
+          renderItem={(item, index) =>renderItem(item, index)}
+        />
+      }
+      {!mainPage &&
+        <View style={{flexDirection: "row", justifyContent: "space-around", width: "100%"}}>
+          <Button 
+            title="Menu" 
+            color="#008577"
+            onPress={onBackHandler}
+          />
+          <Button 
+            title="New Day" 
+            color="#008577"
+            onPress={onNewDayHandler}
+          />
+        </View>
+      }
     </View>
   );
 }
